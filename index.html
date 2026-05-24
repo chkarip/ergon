@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ergon</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="container">
+    <!-- Header -->
+    <header>
+      <h1>🚀 Ergon</h1>
+      <div class="header-controls">
+        <div class="search-filter">
+          <input type="text" id="searchInput" placeholder="Search projects..." class="search-input">
+          <select id="statusFilter" class="filter-select">
+            <option value="">All Status</option>
+            <option value="running">Running</option>
+            <option value="stopped">Stopped</option>
+          </select>
+        </div>
+        <button class="btn btn-primary" id="addProjectBtn">+ Add Project</button>
+        <button class="btn btn-ai-badge" id="aiScanBadge" onclick="openAIResultsModal()" style="display:none" title="AI scan results">🤖 <span class="ai-badge-dot"></span></button>
+      </div>
+    </header>
+
+    <!-- Projects Grid -->
+    <div class="projects-grid" id="projectsGrid"></div>
+
+    <!-- Empty State -->
+    <div class="empty-state" id="emptyState">
+      <div class="empty-icon">📁</div>
+      <h2>No Projects Yet</h2>
+      <p>Click "Add Project" to get started</p>
+    </div>
+  </div>
+
+  <!-- Toast Container -->
+  <div id="toastContainer" class="toast-container"></div>
+
+  <!-- Add/Edit Project Modal -->
+  <div class="modal" id="projectModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 id="modalTitle">Add New Project</h2>
+        <button class="close-btn" id="closeModalBtn">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="projectForm">
+          <div class="form-group">
+            <label for="projectName">Project Name</label>
+            <input type="text" id="projectName" required placeholder="My Awesome Project">
+          </div>
+
+          <div class="form-group">
+            <label for="projectPath">Project Path</label>
+            <input type="text" id="projectPath" required placeholder="D:/projects/my-project">
+            <small>Full path to your project folder</small>
+          </div>
+
+          <div class="form-group">
+            <label for="projectType">Project Type</label>
+            <select id="projectType">
+              <option value="web">Web — single dev server</option>
+              <option value="fullstack">Fullstack — backend + frontend</option>
+              <option value="desktop">Desktop — no dev server</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="backendCommand">Backend Start Command</label>
+            <input type="text" id="backendCommand" placeholder="npm run dev (optional)">
+            <small>Command to start backend server</small>
+          </div>
+
+          <div class="form-group">
+            <label for="backendPort">Backend Port</label>
+            <div class="port-input-row">
+              <input type="number" id="backendPort" placeholder="3000" min="1" max="65535">
+              <button type="button" class="btn-suggest-port" onclick="suggestPort('backendPort', 'frontendPort')">Suggest</button>
+            </div>
+            <small>Port where backend runs (e.g. 3000, 8080)</small>
+          </div>
+
+          <div class="form-group">
+            <label for="frontendCommand">Frontend Start Command</label>
+            <input type="text" id="frontendCommand" placeholder="npm start (optional)">
+            <small>Command to start frontend server</small>
+          </div>
+
+          <div class="form-group">
+            <label for="frontendPort">Frontend Port</label>
+            <div class="port-input-row">
+              <input type="number" id="frontendPort" placeholder="3001" min="1" max="65535">
+              <button type="button" class="btn-suggest-port" onclick="suggestPort('frontendPort', null)">Suggest</button>
+            </div>
+            <small>Port where frontend runs (e.g. 3001, 5173)</small>
+          </div>
+
+          <div class="form-group form-group-color">
+            <label for="projectColor">Project Color</label>
+            <input type="color" id="projectColor" value="#3b82f6" class="color-picker">
+          </div>
+
+          <div class="modal-actions">
+            <button type="button" class="btn btn-secondary" id="cancelBtn">Cancel</button>
+            <button type="submit" class="btn btn-primary">Save Project</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- AI Scan Results Modal -->
+  <div class="modal" id="aiResultsModal">
+    <div class="modal-content ai-modal-content">
+      <div class="modal-header">
+        <h2>🤖 AI Project Scan Results</h2>
+        <button class="close-btn" id="aiCloseModalBtn">&times;</button>
+      </div>
+      <div class="modal-body" id="aiModalBody">
+        <!-- Dynamically populated -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Screenshot Overlay for Deep Scan -->
+  <div class="screenshot-overlay" id="screenshotOverlay" onclick="closeScreenshotViewer()">
+    <button class="screenshot-close-btn" onclick="closeScreenshotViewer()">&times;</button>
+    <img id="screenshotOverlayImg" src="" alt="Screenshot">
+  </div>
+
+  <!-- Renderer modules — loaded in dependency order -->
+  <script src="js/state.js"></script>
+  <script src="js/utils.js"></script>
+  <script src="js/data.js"></script>
+  <script src="js/process.js"></script>
+  <script src="js/git.js"></script>
+  <script src="js/cards.js"></script>
+  <script src="js/ai-render.js"></script>
+  <script src="js/ai-actions.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

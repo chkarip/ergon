@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(node *)",
+      "Bash(npm run *)",
+      "WebSearch",
+      "PowerShell($files = @\\(\"js\\\\state.js\",\"js\\\\utils.js\",\"js\\\\data.js\",\"js\\\\process.js\",\"js\\\\git.js\",\"js\\\\cards.js\",\"js\\\\ai-render.js\",\"js\\\\ai-actions.js\",\"app.js\"\\); foreach \\($f in $files\\) { node -c \"D:\\\\project-manager\\\\$f\" 2>&1; if \\($?\\) { echo \"$f OK\" } else { echo \"FAIL: $f\" } })",
+      "Bash(Get-ChildItem -Path \"D:\\\\project-manager\" -Name)",
+      "Bash(Sort-Object)",
+      "PowerShell(Remove-Item *)",
+      "PowerShell(Get-ChildItem *)",
+      "PowerShell(taskkill *)"
+    ]
+  }
+}
