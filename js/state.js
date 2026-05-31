@@ -1,7 +1,6 @@
 // State Management
 let projects = [];
 let editingProjectId = null;
-let scanMeta = { lastWeeklyScanAt: null, scanBadgeVisible: false };
 const ERGON_ID = '__ergon__';
 let ergonProject = null;
 

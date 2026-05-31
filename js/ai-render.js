@@ -225,13 +225,6 @@ function renderAIResultsModal(focusProjectId, filterScanType) {
 }
 
 function openAIResultsModal(focusProjectId, filterScanType) {
-  if (!focusProjectId && !filterScanType && scanMeta.scanBadgeVisible) {
-    scanMeta.scanBadgeVisible = false;
-    window.electronAPI.aiMarkScanComplete({
-      lastScanAt: scanMeta.lastWeeklyScanAt,
-      badgeVisible: false
-    });
-  }
   _currentModalFocusId = focusProjectId || null;
   _currentModalFilterType = filterScanType || null;
   renderAIResultsModal(_currentModalFocusId, _currentModalFilterType);
@@ -252,10 +245,6 @@ function updateScanBadge() {
     )
   );
   badge.style.display = hasResults ? 'inline-flex' : 'none';
-  const dot = badge.querySelector('.ai-badge-dot');
-  if (dot) {
-    dot.className = scanMeta.scanBadgeVisible ? 'ai-badge-dot ai-badge-new' : 'ai-badge-dot';
-  }
 }
 
 function viewScreenshot(screenshotPath) {

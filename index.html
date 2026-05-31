@@ -125,6 +125,30 @@
     </div>
   </div>
 
+  <!-- Link Astrolabe Project Modal -->
+  <div class="modal" id="astroLinkModal">
+    <div class="modal-content astro-link-modal-content">
+      <div class="modal-header">
+        <h2>🔭 Link Astrolabe Workspace</h2>
+        <button class="close-btn" id="astroLinkCloseBtn">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p class="astro-link-desc">Link <strong id="astroLinkProjectName"></strong> to an existing Astrolabe workspace. The names can differ — Ergon stores the mapping.</p>
+        <div class="form-group">
+          <label for="astroLinkInput">Astrolabe project name</label>
+          <input type="text" id="astroLinkInput" placeholder="e.g. Chalkapp">
+          <small>Exact name of the workspace in Astrolabe (case-sensitive).</small>
+        </div>
+        <div class="astro-link-current" id="astroLinkCurrent"></div>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-secondary" id="astroLinkCancelBtn">Cancel</button>
+          <button type="button" class="btn btn-danger" id="astroLinkClearBtn" style="display:none">Remove Link</button>
+          <button type="button" class="btn btn-primary" id="astroLinkSaveBtn">Save Link</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Screenshot Overlay for Deep Scan -->
   <div class="screenshot-overlay" id="screenshotOverlay" onclick="closeScreenshotViewer()">
     <button class="screenshot-close-btn" onclick="closeScreenshotViewer()">&times;</button>

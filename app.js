@@ -47,11 +47,16 @@ aiResultsModal.addEventListener('click', (e) => {
 // Escape key
 document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') {
-    const aiModal = document.getElementById('aiResultsModal');
-    if (aiModal && aiModal.classList.contains('show')) {
-      closeAIResultsModal();
+    const linkModal = document.getElementById('astroLinkModal');
+    if (linkModal && linkModal.classList.contains('show')) {
+      closeAstroLinkModal();
     } else {
-      closeModal();
+      const aiModal = document.getElementById('aiResultsModal');
+      if (aiModal && aiModal.classList.contains('show')) {
+        closeAIResultsModal();
+      } else {
+        closeModal();
+      }
     }
   }
 });
@@ -157,14 +162,128 @@ window.electronAPI.onDeepScanProgress((data) => {
 searchInput.addEventListener('input', renderProjects);
 statusFilter.addEventListener('change', renderProjects);
 
+async function openInAstrolabe(projectId) {
+  const project = findProject(projectId);
+  if (!project) return;
+
+  // Find the Astrolabe project registered in Ergon to get its path
+  const astroEntry = projects.find(p =>
+    p.name.toLowerCase().includes('astro') ||
+    p.path.toLowerCase().includes('astrolabe')
+  );
+  if (!astroEntry) {
+    showToast('Add your Astrolabe project to Ergon first.', 'error', 5000);
+    return;
+  }
+
+  // Write handoff: linked workspace opens directly; no link signals create-new
+  const handoff = { name: project.name, path: project.path };
+  if (project.astroLinkedProject) {
+    handoff.astroProject = project.astroLinkedProject;
+  } else {
+    handoff.createNew = true;
+  }
+  await window.electronAPI.writeHandoff(handoff);
+
+  // Try the dev binary first (debug/release build in src-tauri/target/).
+  // Fall back to the astrolabe:// protocol only if no binary is found (installed build).
+  const bin = await window.electronAPI.launchAstrolabe(astroEntry.path);
+  if (!bin.success) {
+    const proto = await window.electronAPI.openUrl('astrolabe://');
+    if (!proto.success) {
+      showToast('Could not launch Astrolabe: ' + bin.error, 'error', 6000);
+      return;
+    }
+  }
+
+  const msg = project.astroLinkedProject
+    ? `Opening "${project.astroLinkedProject}" in Astrolabe ✓`
+    : 'Astrolabe opening — create new workspace ✓';
+  showToast(msg, 'success', 2500);
+}
+
+// --- Astrolabe Link Modal ---
+
+let _astroLinkProjectId = null;
+
+function openLinkAstrolabe(projectId) {
+  const project = findProject(projectId);
+  if (!project) return;
+
+  _astroLinkProjectId = projectId;
+  document.getElementById('astroLinkProjectName').textContent = project.name;
+  document.getElementById('astroLinkInput').value = project.astroLinkedProject || '';
+
+  const clearBtn = document.getElementById('astroLinkClearBtn');
+  const currentDiv = document.getElementById('astroLinkCurrent');
+  if (project.astroLinkedProject) {
+    clearBtn.style.display = '';
+    currentDiv.textContent = `Currently linked to: ${project.astroLinkedProject}`;
+    currentDiv.style.display = '';
+  } else {
+    clearBtn.style.display = 'none';
+    currentDiv.style.display = 'none';
+  }
+
+  const modal = document.getElementById('astroLinkModal');
+  modal.style.display = 'flex';
+  modal.classList.add('show');
+  setTimeout(() => document.getElementById('astroLinkInput').focus(), 50);
+}
+
+function closeAstroLinkModal() {
+  const modal = document.getElementById('astroLinkModal');
+  modal.classList.remove('show');
+  modal.style.display = 'none';
+  _astroLinkProjectId = null;
+}
+
+function saveAstroLink() {
+  if (!_astroLinkProjectId) return;
+  const project = findProject(_astroLinkProjectId);
+  if (!project) return;
+
+  const name = document.getElementById('astroLinkInput').value.trim();
+  if (!name) {
+    showToast('Enter an Astrolabe project name to link.', 'error', 3000);
+    return;
+  }
+
+  project.astroLinkedProject = name;
+  saveProjects();
+  renderProjects();
+  closeAstroLinkModal();
+  showToast(`Linked "${project.name}" → "${name}" in Astrolabe ✓`, 'success', 2500);
+}
+
+function clearAstroLink() {
+  if (!_astroLinkProjectId) return;
+  const project = findProject(_astroLinkProjectId);
+  if (!project) return;
+
+  delete project.astroLinkedProject;
+  saveProjects();
+  renderProjects();
+  closeAstroLinkModal();
+  showToast('Astrolabe link removed.', 'info', 2000);
+}
+
+document.getElementById('astroLinkCloseBtn').addEventListener('click', closeAstroLinkModal);
+document.getElementById('astroLinkCancelBtn').addEventListener('click', closeAstroLinkModal);
+document.getElementById('astroLinkSaveBtn').addEventListener('click', saveAstroLink);
+document.getElementById('astroLinkClearBtn').addEventListener('click', clearAstroLink);
+document.getElementById('astroLinkModal').addEventListener('click', (e) => {
+  if (e.target === document.getElementById('astroLinkModal')) closeAstroLinkModal();
+});
+document.getElementById('astroLinkInput').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') saveAstroLink();
+  if (e.key === 'Escape') closeAstroLinkModal();
+});
+
 // Initialize
 (async () => {
   await initErgonProject();
   await loadProjects();
-  const scanCheck = await window.electronAPI.aiCheckScanDue();
-  scanMeta.lastWeeklyScanAt = scanCheck.lastScanAt;
-  scanMeta.scanBadgeVisible = false;
   updateScanBadge();
   setInterval(refreshAllStatuses, 5000);
-  setTimeout(() => runWeeklyScanIfDue(), 2000);
 })();

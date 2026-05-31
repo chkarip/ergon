@@ -26,11 +26,12 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // App info
   getAppPath: () => ipcRenderer.invoke('get-app-path'),
 
+  // Astro integration
+  writeHandoff: (data) => ipcRenderer.invoke('write-handoff', data),
+  launchAstrolabe: (astroProjectPath) => ipcRenderer.invoke('launch-astrolabe', astroProjectPath),
+
   // AI Scan
   aiScanProject: (projectPath, scanType) => ipcRenderer.invoke('ai-scan-project', projectPath, scanType),
-  aiScanAll: (paths) => ipcRenderer.invoke('ai-scan-all', paths),
-  aiCheckScanDue: () => ipcRenderer.invoke('ai-check-scan-due'),
-  aiMarkScanComplete: (data) => ipcRenderer.invoke('ai-mark-scan-complete', data),
 
   // Deep Scan (3-phase)
   deepScanProject: (projectPath, scanType, options) => ipcRenderer.invoke('deep-scan-project', projectPath, scanType, options),

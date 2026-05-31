@@ -187,6 +187,10 @@ function createProjectCard(project) {
         </div>
       </div>
       <div class="project-actions">
+        <button class="btn-icon btn-astrolabe${project.astroLinkedProject ? ' btn-astrolabe-linked' : ''}"
+                onclick="openInAstrolabe('${pid}')"
+                oncontextmenu="event.preventDefault(); openLinkAstrolabe('${pid}')"
+                title="${project.astroLinkedProject ? `Open ${escapeHtml(project.astroLinkedProject)} in Astrolabe (right-click to change link)` : 'Open in Astrolabe (right-click to link)'}">🔭</button>
         <button class="btn-icon" onclick="editProject('${pid}')" title="Edit">✏️</button>
         <button class="btn-icon" onclick="deleteProject('${pid}')" title="Delete">🗑️</button>
       </div>

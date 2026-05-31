@@ -1,6 +1,6 @@
 # Ergon — Claude Code Guidelines
 
-Last updated: 2026-05-10 (session: saved scan suggestions)
+Last updated: 2026-05-31 (session: Astrolabe linked-project flow)
 
 Ergon is a local Electron desktop app that manages dev project paths and startup scripts. It lets you register projects, start/stop their servers, run git operations, and check port availability — all from one place.
 
@@ -120,10 +120,10 @@ Ergon is a local Electron desktop app that manages dev project paths and startup
 
 ---
 
-### AI Weekly Project Scan
-**Last touched:** 2026-05-10
-**What it is for:** Getting AI-powered bug and feature-idea insights across all projects.
-**How it works:** A "Scan Now" button on each project card sends the full codebase (excluding node_modules, .git, dist, etc.) to the DeepSeek API for analysis. The AI returns bugs and feature ideas with severity/priority. Results appear in a per-card preview and a full summary modal (🤖 badge in the header). Once a week on startup, Ergon auto-scans all projects and shows a pulsing red dot on the badge when new results are ready. Results persist in `projects.json` under `project.scanResults` until the next scan replaces them. API config is read from `~/.continue/config.yaml` (DeepSeek provider). New IPC channels: `ai-scan-project`, `ai-scan-all`, `ai-check-scan-due`, `ai-mark-scan-complete`. Scan metadata lives in `scan-meta.json` alongside `projects.json`.
+### AI Project Scan
+**Last touched:** 2026-05-31
+**What it is for:** Getting AI-powered bug and feature-idea insights for individual projects.
+**How it works:** A "Scan Now" button on each project card sends the full codebase (excluding node_modules, .git, dist, etc.) to the DeepSeek API for analysis. The AI returns bugs and feature ideas with severity/priority. Results appear in a per-card preview and a full summary modal (🤖 badge in the header). The badge is shown whenever any project has scan results. Results persist in `projects.json` under `project.scanResults` until the next scan replaces them. API config is read from `~/.continue/config.yaml` (DeepSeek provider). IPC channel: `ai-scan-project`. Note: the automatic weekly scan was removed — scanning is manual only.
 
 ---
 
@@ -138,6 +138,15 @@ Ergon is a local Electron desktop app that manages dev project paths and startup
 **Last touched:** 2026-05-10
 **What it is for:** Preventing orphaned server processes after the app is closed.
 **How it works:** When the user closes Ergon, all running backend and frontend processes are stopped automatically before the window disappears.
+
+---
+
+### Open in Astrolabe
+**Last touched:** 2026-05-31
+**What it is for:** Bidirectional navigation between Ergon and Astrolabe (the AI canvas workspace), with support for manually linking Ergon projects to named Astrolabe workspaces even when their names differ.
+**Ergon → Astrolabe (left-click 🔭):** Writes a handoff file (`ergon-astrolabe-handoff.json` in OS temp dir) and starts the Astrolabe process via Ergon's process manager. The handoff payload includes `{ name, path, timestamp }` plus either `astroProject` (the linked Astrolabe workspace name, if set) or `createNew: true` (to prompt the user to create a new workspace). Astrolabe reads this file and routes accordingly.
+**Linking (right-click 🔭):** Opens a "Link Astrolabe Workspace" modal where the user types the Astrolabe project name to link to. The link is stored in `project.astroLinkedProject` in `projects.json`. Linked projects show a green dot on the 🔭 button. The link can be removed from the same modal.
+**Astrolabe → Ergon:** Observatory header and canvas top-left panel both have a 🚀 Ergon button. Clicking calls `openUrl('ergon://')` from `@tauri-apps/plugin-opener`. Ergon registers the `ergon://` scheme via `app.setAsDefaultProtocolClient('ergon')` and uses `requestSingleInstanceLock` to bring its window to front. Known projects: Astrolabe at `d:\Astrolabe\astrolabe`, ChalkBlock (Expo/React Native) at `d:\ChalkBlock` — link: ChalkBlock → Chalkapp.
 
 ---
 

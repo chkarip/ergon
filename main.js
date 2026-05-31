@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, shell } = require('electron');
+﻿const { app, BrowserWindow, ipcMain, shell } = require('electron');
 const path = require('path');
 const { spawn, exec } = require('child_process');
 const fs = require('fs');
@@ -15,6 +15,22 @@ process.on('uncaughtException', (err) => { if (err.code !== 'EPIPE') throw err; 
 let mainWindow;
 const runningProcesses = new Map();
 
+// Register ergon:// URI scheme so Astrolabe (and other apps) can bring this window to focus
+app.setAsDefaultProtocolClient('ergon');
+
+// Single-instance lock — required so protocol URLs route to the existing window on Windows
+const gotTheLock = app.requestSingleInstanceLock();
+if (!gotTheLock) {
+  app.quit();
+} else {
+  app.on('second-instance', () => {
+    if (mainWindow) {
+      if (mainWindow.isMinimized()) mainWindow.restore();
+      mainWindow.focus();
+    }
+  });
+}
+
 function createWindow() {
   mainWindow = new BrowserWindow({
     width: 1200,
@@ -30,9 +46,13 @@ function createWindow() {
 
   mainWindow.loadFile('index.html');
   
-  // Open DevTools in development
-  if (process.argv.includes('--dev')) {
+  const isDev = process.argv.includes('--dev');
+  if (isDev) {
     mainWindow.webContents.openDevTools();
+  } else {
+    mainWindow.webContents.on('devtools-opened', () => {
+      mainWindow.webContents.closeDevTools();
+    });
   }
 }
 
@@ -1132,85 +1152,44 @@ ipcMain.handle('ai-scan-project', async (event, projectPath, scanType) => {
   }
 });
 
-ipcMain.handle('ai-scan-all', async (event, projectPaths) => {
-  try {
-    const results = {};
-    for (const pPath of projectPaths) {
-      try {
-        const readme = findReadmeFile(pPath);
-        const files = gatherSourceFiles(pPath);
-        const systemPrompt = AI_SYSTEM_PROMPTS.general;
-
-        let userPrompt = '';
-        if (readme) userPrompt += `## Project README\n\n${readme}\n\n`;
-        if (files.trim()) userPrompt += `## Source Files\n\n${files}`;
-
-        if (!userPrompt.trim()) {
-          results[pPath] = {
-            bugs: { findings: [], scannedAt: Date.now() },
-            features: { findings: [], scannedAt: Date.now() }
-          };
-        } else {
-          const scanResult = await callDeepSeekAPI(systemPrompt, userPrompt);
-          if (scanResult.success) {
-            const ts = scanResult.results.scannedAt || Date.now();
-            results[pPath] = {
-              bugs: { findings: Array.isArray(scanResult.results.bugs) ? scanResult.results.bugs : [], scannedAt: ts },
-              features: { findings: Array.isArray(scanResult.results.features) ? scanResult.results.features : [], scannedAt: ts }
-            };
-          } else {
-            results[pPath] = {
-              bugs: { findings: [], scannedAt: Date.now(), error: scanResult.error },
-              features: { findings: [], scannedAt: Date.now(), error: scanResult.error }
-            };
-          }
-        }
-      } catch (err) {
-        results[pPath] = {
-          bugs: { findings: [], scannedAt: Date.now(), error: err.message },
-          features: { findings: [], scannedAt: Date.now(), error: err.message }
-        };
-      }
-    }
-    return { success: true, results };
-  } catch (error) {
-    return { success: false, error: error.message };
-  }
+ipcMain.handle('get-app-path', async () => {
+  return { path: __dirname };
 });
 
-ipcMain.handle('ai-check-scan-due', async () => {
-  try {
-    const userDataPath = app.getPath('userData');
-    const metaFile = path.join(userDataPath, 'scan-meta.json');
-    if (!fs.existsSync(metaFile)) {
-      return { due: true, lastScanAt: null };
-    }
-    const meta = JSON.parse(fs.readFileSync(metaFile, 'utf8'));
-    const ONE_WEEK_MS = 7 * 24 * 60 * 60 * 1000;
-    const due = !meta.lastWeeklyScanAt || (Date.now() - meta.lastWeeklyScanAt) >= ONE_WEEK_MS;
-    return { due, lastScanAt: meta.lastWeeklyScanAt || null };
-  } catch (error) {
-    return { due: true, lastScanAt: null, error: error.message };
-  }
-});
+const os = require('os');
+const HANDOFF_FILE = path.join(os.tmpdir(), 'ergon-astrolabe-handoff.json');
 
-ipcMain.handle('ai-mark-scan-complete', async (event, { lastScanAt, badgeVisible }) => {
+ipcMain.handle('write-handoff', async (event, data) => {
   try {
-    const userDataPath = app.getPath('userData');
-    const metaFile = path.join(userDataPath, 'scan-meta.json');
-    const current = {};
-    if (fs.existsSync(metaFile)) {
-      try { Object.assign(current, JSON.parse(fs.readFileSync(metaFile, 'utf8'))); } catch {}
-    }
-    current.lastWeeklyScanAt = lastScanAt || current.lastWeeklyScanAt || Date.now();
-    current.scanBadgeVisible = badgeVisible;
-    fs.writeFileSync(metaFile, JSON.stringify(current, null, 2));
+    fs.writeFileSync(HANDOFF_FILE, JSON.stringify({ ...data, timestamp: Date.now() }));
     return { success: true };
   } catch (error) {
     return { success: false, error: error.message };
   }
 });
 
-ipcMain.handle('get-app-path', async () => {
-  return { path: __dirname };
+// Launch Astrolabe binary directly (protocol not registered in dev mode).
+// Searches debug then release build outputs relative to the project path.
+ipcMain.handle('launch-astrolabe', async (event, astroProjectPath) => {
+  const candidates = [
+    path.join(astroProjectPath, 'src-tauri', 'target', 'debug', 'astrolabe.exe'),
+    path.join(astroProjectPath, 'src-tauri', 'target', 'release', 'astrolabe.exe'),
+  ];
+
+  const binary = candidates.find(p => fs.existsSync(p));
+  if (!binary) {
+    return { success: false, error: `Astrolabe binary not found. Build it first with: npm run tauri dev` };
+  }
+
+  try {
+    const child = spawn(binary, [], {
+      cwd: astroProjectPath,
+      detached: true,
+      stdio: 'ignore',
+    });
+    child.unref();
+    return { success: true, binary };
+  } catch (err) {
+    return { success: false, error: err.message };
+  }
 });
