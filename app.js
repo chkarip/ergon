@@ -286,4 +286,5 @@ document.getElementById('astroLinkInput').addEventListener('keydown', (e) => {
   await loadProjects();
   updateScanBadge();
   setInterval(refreshAllStatuses, 5000);
+
 })();
