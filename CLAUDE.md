@@ -1,6 +1,6 @@
 # Ergon — Claude Code Guidelines
 
-Last updated: 2026-05-31 (session: Astrolabe linked-project flow)
+Last updated: 2026-06-12 (session: Master QA Guide integration)
 
 Ergon is a local Electron desktop app that manages dev project paths and startup scripts. It lets you register projects, start/stop their servers, run git operations, and check port availability — all from one place.
 
@@ -11,6 +11,7 @@ Ergon is a local Electron desktop app that manages dev project paths and startup
 > **Rules for Claude:**
 > - Before starting any task, check if the feature you are about to work on has an entry below. If it does not, add it first. If it does, read it before touching anything.
 > - After finishing any task, update the entry — correct anything that changed and update the "Last touched" date.
+> - **Verification Requirement**: Before declaring any feature/bug completed, run the verification checks and copy-paste the pre-flight checklist defined in the master [QA_FOR_AGENTS.md](file:///d:/my%20apps/QA_FOR_AGENTS.md) at the workspace root.
 > - Update the "Last updated" date at the top of this file after every session.
 
 ---
