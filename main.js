@@ -1,6 +1,6 @@
 ﻿const { app, BrowserWindow, ipcMain, shell } = require('electron');
 const path = require('path');
-const { spawn, exec } = require('child_process');
+const { spawn, exec, execFile } = require('child_process');
 const fs = require('fs');
 const net = require('net');
 const https = require('https');
@@ -59,19 +59,23 @@ function createWindow() {
 app.whenReady().then(createWindow);
 
 app.on('window-all-closed', () => {
-  // Kill all running processes before closing
-  runningProcesses.forEach((process, id) => {
-    if (process && !process.killed) {
-      if (process.pid) {
-        try {
-          process.kill();
-        } catch (err) {
-          console.error('Error killing process:', err);
+  // Kill all running processes (and their child trees) before closing.
+  // Processes are spawned with `shell: true`, so the tracked PID is the shell
+  // (cmd.exe), not the real dev server -- a plain kill() would orphan it.
+  runningProcesses.forEach((proc) => {
+    if (proc && !proc.killed && proc.pid) {
+      try {
+        if (process.platform === 'win32') {
+          exec(`taskkill /pid ${proc.pid} /T /F`);
+        } else {
+          proc.kill('SIGTERM');
         }
+      } catch (err) {
+        console.error('Error killing process:', err);
       }
     }
   });
-  
+
   if (process.platform !== 'darwin') {
     app.quit();
   }
@@ -919,17 +923,18 @@ ipcMain.handle('git-status', async (event, projectPath) => {
 
 ipcMain.handle('git-commit', async (event, { projectPath, message }) => {
   return new Promise((resolve) => {
-    const commands = [
-      'git add .',
-      `git commit -m "${message.replace(/"/g, '\\"')}"`
-    ];
-    
-    exec(commands.join(' && '), { cwd: projectPath }, (error, stdout, stderr) => {
-      if (error && error.code !== 0) {
-        resolve({ success: false, error: error.message });
+    execFile('git', ['add', '.'], { cwd: projectPath }, (addError, addStdout, addStderr) => {
+      if (addError && addError.code !== 0) {
+        resolve({ success: false, error: addError.message });
         return;
       }
-      resolve({ success: true, output: stdout + stderr });
+      execFile('git', ['commit', '-m', message], { cwd: projectPath }, (commitError, commitStdout, commitStderr) => {
+        if (commitError && commitError.code !== 0) {
+          resolve({ success: false, error: commitError.message });
+          return;
+        }
+        resolve({ success: true, output: addStdout + addStderr + commitStdout + commitStderr });
+      });
     });
   });
 });
