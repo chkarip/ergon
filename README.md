@@ -1,4 +1,34 @@
-# Ergon
+# Ergon — RETIRED (August 2026)
+
+> ## ⚠️ This project is retired. Do not add features to it.
+>
+> Ergon's job has moved into **Daedalus** (`../deadalus`), which now owns the project
+> registry: `daedalus/tools/projects.py` for storage, and the **Projects** section of
+> the sidebar for the UI. Git operations (`tools/git_tools.py`) and AI project scanning
+> (`tools/scan.py`) already lived there.
+>
+> ### Migration status — one item left
+>
+> | What | Ported to | Status |
+> |---|---|---|
+> | Project registry (paths, colours, notes) | `tools/projects.py` | done |
+> | Windows process-tree termination | `tools/shell.py` — `terminate_pid_tree()` | done |
+> | Live stdout streaming into the UI | `tools/shell.py` — `_pump()` + polling | done |
+> | Port-conflict check & free-port suggestion | `tools/ports.py` | done |
+> | Dev-server `--port` flag table (9 frameworks) | `tools/ports.py` — `apply_port()` | done |
+> | Git status / pull / push buttons | `tools/git_tools.py` | done |
+> | AI project scan | `tools/scan.py` (local, no DeepSeek key needed) | done |
+> | **Astrolabe handoff + `ergon://` protocol** | — | **not ported** |
+>
+> **This repository can be archived once the Astrolabe handoff is ported or dropped.**
+> It is now the only thing here that exists nowhere else: `main.js` writes
+> `ergon-astrolabe-handoff.json` to the OS temp directory and launches the Astrolabe
+> binary, and registers the `ergon://` scheme so Astrolabe can focus Ergon back.
+>
+> A web UI cannot register a custom protocol, so the return leg needs a different
+> design — most likely Astrolabe just opening `http://127.0.0.1:8001`.
+
+---
 
 A desktop application to manage and run your development projects with ease.
 
