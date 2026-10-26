@@ -4,7 +4,9 @@
 const { spawn } = require('child_process');
 const path = require('path');
 
-const electronBin = path.join(__dirname, 'node_modules', 'electron', 'dist', 'electron.exe');
+const electronBin = process.platform === 'darwin'
+  ? path.join(__dirname, 'node_modules', 'electron', 'dist', 'Electron.app', 'Contents', 'MacOS', 'Electron')
+  : path.join(__dirname, 'node_modules', 'electron', 'dist', 'electron.exe');
 const env = Object.assign({}, process.env);
 delete env.ELECTRON_RUN_AS_NODE;
 
