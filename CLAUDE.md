@@ -1,5 +1,7 @@
 # Ergon — Claude Code Guidelines
 
+Project mode: personal
+
 Last updated: 2026-06-12 (session: Master QA Guide integration)
 
 Ergon is a local Electron desktop app that manages dev project paths and startup scripts. It lets you register projects, start/stop their servers, run git operations, and check port availability — all from one place.
